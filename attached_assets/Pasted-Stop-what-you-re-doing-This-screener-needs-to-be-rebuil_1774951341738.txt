@@ -1,0 +1,50 @@
+Stop what you're doing. This screener needs to be rebuilt 
+with my exact trading strategy from my first project. 
+Here are the exact specifications:
+
+1. SWEEP FORMULA: 
+sweep_percent = (candle_high - candle_low) / daily_ATR × 100
+Flag as sweep if > 20%. Confirmed if next candle closes 
+beyond sweep candle's high/low.
+
+2. SCORING WEIGHTS:
+- Liquidity sweep detected: 30 points
+- RSI oversold(<30) or overbought(>70): 20 points  
+- EMA trend alignment: 15 points
+- Near pivot level (S1/S2/R1/R2): 25 points
+- Near Fibonacci retracement: 20 points
+- Confirmation candle: 30 points
+Minimum score to show in results: 60 points
+
+3. EXACT FORMULAS:
+RSI period: 14
+ATR period: 14  
+EMA period: 20
+Pivots: pp=(H+L+C)/3, R1=(2×pp)-L, R2=pp+(H-L), S1=(2×pp)-H, S2=pp-(H-L)
+Fibonacci retracements: 0.236, 0.382, 0.5, 0.618, 0.786
+Fibonacci extensions: 1.272, 1.414, 1.618, 2.618
+
+4. ASSETS TO SCAN:
+- Top 20 S&P 500 stocks (AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, BRK-B, JPM, JNJ, V, PG, UNH, HD, MA, DIS, BAC, XOM, PFE, KO)
+- FTSE 100 top 20 (append .L to symbols)
+- Top 20 crypto via Binance (BTCUSDT, ETHUSDT, BNBUSDT, SOLUSDT, XRPUSDT, ADAUSDT, AVAXUSDT, DOGEUSDT, DOTUSDT, MATICUSDT, LINKUSDT, UNIUSDT, ATOMUSDT, LTCUSDT, ETCUSDT, XLMUSDT, ALGOUSDT, VETUSDT, FILUSDT, TRXUSDT)
+- Major forex (EURUSD=X, GBPUSD=X, USDJPY=X, AUDUSD=X, USDCAD=X)
+- Major indices (^GSPC, ^IXIC, ^FTSE, ^DJI, ^VIX)
+
+5. DASHBOARD FEATURES:
+- Dark theme
+- Ranked table sorted by score (highest first)
+- Filter by: All / Stocks / Crypto / Forex / Indices
+- Filter by: All / BUY / SELL
+- Each row shows: Rank, Symbol, Asset Class, Action, Score, RSI, Sweep%, Entry, Stop, Target
+- Top 10 morning watchlist section (refreshes at 7am daily)
+- Scans every 15 minutes automatically
+- Shows last scan time
+- No Telegram integration
+
+6. DATA SOURCES:
+- yfinance for stocks, forex, indices
+- Binance public API for crypto (no key needed)
+
+Please rebuild the entire project to match these exact 
+specifications. Use Flask for the web server.
