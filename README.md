@@ -2,7 +2,7 @@
 
 > Real-time institutional liquidity sweep detector scanning 90+ assets across global markets — built with Python, Flask, and a Markov regime model.
 
-**Live Dashboard:** [https://your-deployment-url.replit.app](https://your-deployment-url.replit.app) *(placeholder — deploy to update)*
+**Live Dashboard:** [[https://your-deployment-url.replit.app](https://your-deployment-url.replit.app) *(placeholder — deploy to update)](https://d21710e1-1346-4289-a29f-20f96778937f-00-dgxauwz3maxa.worf.replit.dev/)*
 
 ---
 
