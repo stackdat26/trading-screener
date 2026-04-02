@@ -4,13 +4,24 @@ A real-time institutional liquidity sweep detector and market analyzer built wit
 
 ## Overview
 
-Scans 90+ assets (US/UK stocks, crypto, forex, and indices) every 15 minutes to identify high-probability trading signals based on liquidity sweeps, technical indicators, and a Markov regime model.
+Scans 300+ assets across 6 asset classes every 15 minutes to identify high-probability trading signals based on liquidity sweeps, technical indicators, and a Markov regime model.
+
+## Asset Coverage
+
+| Asset Class | Count | Source |
+|---|---|---|
+| US Stocks (S&P 500) | 111 | Yahoo Finance |
+| UK Stocks (FTSE 100) | 100 | Yahoo Finance (.L suffix) |
+| Crypto | 40 | Binance API |
+| Forex | 40 | Yahoo Finance |
+| Indices | 24 | Yahoo Finance |
+| Commodities | 20 | Yahoo Finance |
 
 ## Architecture
 
 - **`core/`** — Screener engine, sweep detector, Markov chain, data feed (yfinance + Binance), and indicators (RSI, ATR, EMA, VWAP, Fibonacci, Pivot Points)
 - **`dashboard/`** — Flask API (`app.py`) and vanilla JS/Chart.js frontend (`templates/index.html`)
-- **`config/settings.py`** — Asset lists (90+ symbols), scoring weights, thresholds
+- **`config/settings.py`** — Asset lists (300+ symbols across 6 classes), scoring weights, thresholds
 - **`main.py`** — Local entry point: starts background scan thread + scheduler, then Flask on port 5000
 - **`wsgi.py`** — Production WSGI entry point (used by gunicorn), starts same background threads
 
@@ -26,7 +37,8 @@ On startup it:
 ## Key Dependencies
 
 - Flask, Flask-CORS, Flask-SQLAlchemy
-- yfinance (market data)
+- yfinance (market data for stocks, forex, indices, commodities)
+- requests (Binance API for crypto)
 - pandas, numpy (data processing)
 - schedule (background job scheduling)
 - gunicorn (production WSGI server)
