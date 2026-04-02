@@ -103,6 +103,11 @@ def api_status():
     })
 
 
+@app.route("/healthz")
+def healthz():
+    return safe_json({"status": "ok"})
+
+
 @app.route("/api/scan", methods=["POST"])
 def api_scan():
     from core.screener_engine import run_full_scan
