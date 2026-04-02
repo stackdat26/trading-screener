@@ -1,17 +1,16 @@
 import pandas as pd
 import logging
+from config.settings import SWEEP_THRESHOLD_PCT
 
 logger = logging.getLogger(__name__)
 
-SWEEP_THRESHOLD_PCT = 20.0
 
-
-def detect_sweeps(df_15m: pd.DataFrame, daily_atr: float) -> list:
+def detect_sweeps(df_15m: pd.DataFrame, daily_atr: float, threshold_pct: float = SWEEP_THRESHOLD_PCT) -> list:
     """
     Detect all liquidity sweeps in the 15m candle data.
 
     sweep_percent = ((candle_high - candle_low) / daily_ATR) * 100
-    Flag as sweep if sweep_percent > 20%
+    Flag as sweep if sweep_percent > threshold_pct (dynamic per asset class).
     Bullish confirmed: candle bullish AND next candle closes above sweep candle high
     Bearish confirmed: candle bearish AND next candle closes below sweep candle low
 
@@ -33,7 +32,7 @@ def detect_sweeps(df_15m: pd.DataFrame, daily_atr: float) -> list:
 
         sweep_pct = (candle_range / daily_atr) * 100
 
-        if sweep_pct <= SWEEP_THRESHOLD_PCT:
+        if sweep_pct <= threshold_pct:
             continue
 
         is_bullish_candle = candle["Close"] > candle["Open"]
@@ -76,9 +75,9 @@ def detect_sweeps(df_15m: pd.DataFrame, daily_atr: float) -> list:
     return sweeps
 
 
-def get_latest_sweep(df_15m: pd.DataFrame, daily_atr: float) -> dict | None:
+def get_latest_sweep(df_15m: pd.DataFrame, daily_atr: float, threshold_pct: float = SWEEP_THRESHOLD_PCT) -> dict | None:
     """Return the most recent sweep or None."""
-    sweeps = detect_sweeps(df_15m, daily_atr)
+    sweeps = detect_sweeps(df_15m, daily_atr, threshold_pct=threshold_pct)
     if not sweeps:
         return None
     confirmed = [s for s in sweeps if s["confirmed"]]

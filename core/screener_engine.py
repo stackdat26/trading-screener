@@ -3,7 +3,7 @@ import numpy as np
 from config.settings import (
     BASE_WEIGHTS, MIN_SCORE, SIGNAL_DIFF,
     STOP_LOSS_ATR_MULT, TAKE_PROFIT_FIB_LEVEL, TAKE_PROFIT_ATR_MULT,
-    ASSET_CLASSES
+    ASSET_CLASSES, SWEEP_THRESHOLDS, SWEEP_THRESHOLD_PCT
 )
 from core.data_feed import get_candles
 from core.indicators import compute_all_indicators, price_near_level
@@ -72,7 +72,8 @@ def score_asset(symbol: str, asset_class: str) -> dict | None:
         current_price = float(df_15m["Close"].iloc[-1])
         effective_atr = atr_daily if atr_daily else indicators.get("atr_15m")
 
-        sweep = get_latest_sweep(df_15m, effective_atr)
+        threshold_pct = SWEEP_THRESHOLDS.get(asset_class, SWEEP_THRESHOLD_PCT)
+        sweep = get_latest_sweep(df_15m, effective_atr, threshold_pct=threshold_pct)
 
         context = detect_market_context(ema20, ema50, atr_daily, avg_atr_daily)
         weights = apply_context_weights(BASE_WEIGHTS, context)

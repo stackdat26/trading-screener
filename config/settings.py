@@ -87,7 +87,16 @@ DAILY_LOOKBACK_DAYS = 90
 
 CACHE_TTL_SECONDS = 900
 
-SWEEP_THRESHOLD_PCT = 20.0
+SWEEP_THRESHOLD_PCT = 20.0  # legacy fallback
+
+SWEEP_THRESHOLDS = {
+    "Crypto": 20.0,
+    "US Stocks": 15.0,
+    "UK Stocks": 15.0,
+    "Forex": 10.0,
+    "Indices": 12.0,
+    "Commodities": 15.0,
+}
 
 BASE_WEIGHTS = {
     "sweep_confirmed": 30,
