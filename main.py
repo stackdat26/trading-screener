@@ -69,11 +69,14 @@ def scheduler_loop():
 
 
 if __name__ == "__main__":
+    import os
+
     init_thread = threading.Thread(target=do_scan, daemon=True)
     init_thread.start()
 
     sched_thread = threading.Thread(target=scheduler_loop, daemon=True)
     sched_thread.start()
 
-    logger.info("Starting Flask server on 0.0.0.0:5000")
-    app.run(host="0.0.0.0", port=5000, debug=False, use_reloader=False)
+    port = int(os.environ.get("PORT", 5000))
+    logger.info(f"Starting Flask server on 0.0.0.0:{port}")
+    app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
