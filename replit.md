@@ -1,71 +1,40 @@
 # QuantBot Screener
 
-A quantitative trading screener built by a 17-year-old quant trader. Scans 80+ assets across US stocks, UK stocks, crypto, forex, and indices for institutional liquidity sweeps, scores them using a multi-factor system with a Markov regime model, and displays live signals on a GitHub dark-themed dashboard.
+A real-time institutional liquidity sweep detector and market analyzer built with Python and Flask.
+
+## Overview
+
+Scans 90+ assets (US/UK stocks, crypto, forex, and indices) every 15 minutes to identify high-probability trading signals based on liquidity sweeps, technical indicators, and a Markov regime model.
 
 ## Architecture
 
-- **Entry point**: `main.py` — starts Flask server + background scheduler
-- **Backend**: Python 3.11 + Flask on port 5000
-- **Scheduler**: `schedule` library — scans every 15 minutes, morning watchlist at 07:00 UTC
-- **Data**: yfinance (stocks/forex/indices), Binance public API (crypto)
-- **Frontend**: Pure HTML/CSS/JS served by Flask (no React, no frameworks)
-
-## File Structure
-
-```
-main.py                   # Entry point, scheduler
-requirements.txt
-config/
-  settings.py             # Asset lists, constants, weights
-core/
-  data_feed.py            # Binance + yfinance data fetching with 15-min cache
-  indicators.py           # RSI, ATR, EMA, VWAP, pivots, Fibonacci, monthly zones
-  sweep_detector.py       # Liquidity sweep detection formula
-  screener_engine.py      # Scoring system, market context, risk levels
-  markov.py               # 6-state Markov regime model, transition matrix
-dashboard/
-  app.py                  # Flask routes and state management
-  templates/index.html    # Full SPA dashboard
-```
-
-## Key Concepts
-
-### Sweep Detection
-`sweep_percent = ((candle_high - candle_low) / daily_ATR) × 100`
-- Flag if sweep_percent > 20%
-- Bullish confirmed: bullish candle + next closes above sweep high
-- Bearish confirmed: bearish candle + next closes below sweep low
-
-### Scoring (buy_score / sell_score)
-| Factor | Points |
-|--------|--------|
-| Liquidity sweep confirmed | 30 |
-| Confirmation candle | 30 |
-| Pivot S1/S2 or R1/R2 proximity | 25 |
-| RSI oversold/overbought | 20 |
-| Fibonacci retracement/extension | 20 |
-| EMA20 above/below | 15 |
-| Monthly demand zone | 15 |
-
-- Min score to show: 60 points
-- Signal requires 30-point gap between buy/sell score
-
-### Market Context
-- **CRISIS**: ATR > avg_ATR × 2.0 → all weights × 0.70
-- **TRENDING**: |EMA20 - EMA50| / EMA50 > 2% → sweep & EMA weights × 1.20
-- **NORMAL**: base weights
-
-### Markov Regime Model
-- 6 states: BULLISH, BEARISH, OVERBOUGHT, OVERSOLD, HIGH_VOL, SIDEWAYS
-- Transition matrix built from last 30 candles
-- Prob > 0.55 → +20% confidence; Prob < 0.40 → -20% confidence
+- **`core/`** — Screener engine, sweep detector, Markov chain, data feed (yfinance + Binance), and indicators (RSI, ATR, EMA, VWAP, Fibonacci, Pivot Points)
+- **`dashboard/`** — Flask API (`app.py`) and vanilla JS/Chart.js frontend (`templates/index.html`)
+- **`config/settings.py`** — Asset lists (90+ symbols), scoring weights, thresholds
+- **`main.py`** — Local entry point: starts background scan thread + scheduler, then Flask on port 5000
+- **`wsgi.py`** — Production WSGI entry point (used by gunicorn), starts same background threads
 
 ## Running
 
-```bash
-python main.py
+The app starts via `python main.py` on port 5000. The workflow is named **Start application**.
+
+On startup it:
+1. Fires an initial scan in a background thread
+2. Schedules scans every 15 minutes and a morning watchlist at 07:00 UTC
+3. Serves the dashboard at `/`
+
+## Key Dependencies
+
+- Flask, Flask-CORS, Flask-SQLAlchemy
+- yfinance (market data)
+- pandas, numpy (data processing)
+- schedule (background job scheduling)
+- gunicorn (production WSGI server)
+- psycopg2-binary (PostgreSQL, if needed)
+
+## Deployment
+
+Configured for Replit autoscale deployment using gunicorn:
 ```
-
-## Dependencies
-
-flask, flask-cors, yfinance, pandas, numpy, requests, schedule, gunicorn
+gunicorn --bind 0.0.0.0:5000 main:app
+```
