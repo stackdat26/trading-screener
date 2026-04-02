@@ -1,8 +1,6 @@
 # QuantBot Screener
 
-> Real-time institutional liquidity sweep detector scanning 90+ assets across global markets — built with Python, Flask, and a Markov regime model.
-
-**Live Dashboard:** https://trading-screener-2sfe.onrender.com/ *
+> Real-time institutional liquidity sweep detector scanning 335+ assets across global markets — built with Python, Flask, and a Markov regime model.
 
 ---
 
@@ -12,20 +10,21 @@ Traditional retail traders watch price. Institutional traders move price — and
 
 A liquidity sweep happens when a large player pushes price briefly beyond a key level (like a recent high or low) to trigger stop-loss orders from retail traders sitting on the wrong side. Once that liquidity is collected, price reverses sharply. This is where the real move begins.
 
-**QuantBot Screener** scans 90 assets every 15 minutes looking for these sweeps in real time. It doesn't just flag them — it scores each one across 7 technical factors, models the current market regime using a Markov chain, and delivers a ranked signal with a directional bias, confidence score, entry price, stop loss, and take-profit target.
+**QuantBot Screener** scans 335+ assets every 15 minutes looking for these sweeps in real time. It doesn't just flag them — it scores each one across 7 technical factors, models the current market regime using a Markov chain, and delivers a ranked signal with a directional bias, confidence score, entry price, stop loss, and take-profit target.
 
 ---
 
 ## Assets Covered
 
-| Category    | Count  | Examples                                              |
-|-------------|--------|-------------------------------------------------------|
-| US Stocks   | 30     | AAPL, MSFT, NVDA, TSLA, JPM, AMZN, META, GOOGL       |
-| UK Stocks   | 20     | HSBA.L, BP.L, AZN.L, SHEL.L, ULVR.L, BARC.L         |
-| Crypto      | 20     | BTCUSDT, ETHUSDT, SOLUSDT, BNBUSDT, XRPUSDT          |
-| Forex       | 10     | EURUSD, GBPUSD, USDJPY, AUDUSD, GBPJPY               |
-| Indices     | 10     | S&P 500, NASDAQ, FTSE 100, DAX, Nikkei 225, VIX      |
-| **Total**   | **90** | **Global multi-asset coverage**                       |
+| Category      | Count    | Examples                                                    |
+|---------------|----------|-------------------------------------------------------------|
+| US Stocks     | 111      | AAPL, MSFT, NVDA, TSLA, JPM, AMZN, META, LMT, NEE, NEM    |
+| UK Stocks     | 100      | HSBA.L, BP.L, AZN.L, SHEL.L, ULVR.L, GLEN.L, RIO.L        |
+| Crypto        | 40       | BTCUSDT, ETHUSDT, SOLUSDT, ARBUSDT, INJUSDT, JUPUSDT        |
+| Forex         | 40       | EURUSD, GBPUSD, USDJPY, USDMXN, USDZAR, USDCNH             |
+| Indices       | 24       | S&P 500, NASDAQ, FTSE 100, DAX, Nikkei 225, KOSPI, TA125   |
+| Commodities   | 20       | GC=F (Gold), CL=F (Oil), SI=F (Silver), ZC=F (Corn), NG=F  |
+| **Total**     | **335+** | **6 asset classes across global markets**                   |
 
 ---
 
@@ -39,12 +38,25 @@ Every 15-minute candle is tested against this formula:
 sweep_percent = (candle_high − candle_low) / daily_ATR × 100
 ```
 
-If `sweep_percent > 20%`, the candle qualifies as a sweep candidate. A sweep is then **confirmed** by checking the next candle's close:
+If `sweep_percent` exceeds the **dynamic threshold for that asset class**, the candle qualifies as a sweep candidate. A sweep is then **confirmed** by checking the next candle's close:
 
 - **Bullish sweep confirmed:** Candle is bullish AND next close is above the sweep candle's high → `BUY` signal
 - **Bearish sweep confirmed:** Candle is bearish AND next close is below the sweep candle's low → `SELL` signal
 
 Unconfirmed sweeps are still scored but carry half the weight.
+
+#### Dynamic Sweep Thresholds
+
+Each asset class has a calibrated sensitivity threshold, reflecting its typical volatility profile:
+
+| Asset Class   | Sweep Threshold |
+|---------------|-----------------|
+| Crypto        | 20% of daily ATR |
+| US Stocks     | 15% of daily ATR |
+| UK Stocks     | 15% of daily ATR |
+| Commodities   | 15% of daily ATR |
+| Indices       | 12% of daily ATR |
+| Forex         | 10% of daily ATR |
 
 ---
 
@@ -105,12 +117,13 @@ This prevents high-scoring signals from being acted on when the regime is ambigu
 |---------------|----------------------------------------------------------------------|
 | Language      | Python 3.11                                                          |
 | Web Framework | Flask + Flask-CORS                                                   |
-| Market Data   | yfinance (stocks, forex, indices), Binance REST API (crypto)         |
+| Market Data   | yfinance (stocks, forex, indices, commodities), Binance REST API (crypto) |
 | Indicators    | Custom NumPy / Pandas implementations (no TA-Lib dependency)         |
 | Regime Model  | Custom Markov chain (NumPy)                                          |
 | Frontend      | Vanilla JS, Chart.js, GitHub dark CSS theme                          |
-| Scheduling    | Python threading (background scan loop)                              |
+| Scheduling    | Python `schedule` + threading (background scan loop)                 |
 | Caching       | In-memory 15-minute TTL cache                                        |
+| Server        | Gunicorn (production), Flask dev server (local)                      |
 
 ---
 
@@ -120,14 +133,15 @@ This prevents high-scoring signals from being acted on when the regime is ambigu
 quantbot-screener/
 │
 ├── main.py                     # Entry point — starts Flask + background scan loop
+├── wsgi.py                     # Gunicorn entry point
 │
 ├── config/
-│   └── settings.py             # All asset lists, weights, and thresholds
+│   └── settings.py             # Asset lists, per-class sweep thresholds, scoring weights
 │
 ├── core/
 │   ├── data_feed.py            # Binance + yfinance fetchers with 15m cache
 │   ├── indicators.py           # RSI, ATR, EMA, VWAP, Fibonacci, Pivot Points
-│   ├── sweep_detector.py       # Liquidity sweep detection logic
+│   ├── sweep_detector.py       # Dynamic sweep detection (threshold per asset class)
 │   ├── markov.py               # 6-state Markov chain regime model
 │   └── screener_engine.py      # Scoring, context detection, signal builder
 │
@@ -146,7 +160,7 @@ quantbot-screener/
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 - pip
 
 ### Installation
@@ -157,7 +171,7 @@ git clone https://github.com/stackdat26/trading-screener.git
 cd trading-screener
 
 # 2. Install dependencies
-pip install flask flask-cors yfinance requests pandas numpy
+pip install flask flask-cors yfinance requests pandas numpy schedule gunicorn
 
 # 3. Run the screener
 python main.py
@@ -167,7 +181,7 @@ The dashboard will be available at **http://localhost:5000**
 
 ### First Run
 
-On startup the screener immediately runs a full scan across all 90 assets. This takes roughly 60–90 seconds depending on your connection speed. After that, a background thread rescans every 15 minutes automatically.
+On startup the screener immediately runs a full scan across all 335+ assets. This takes a few minutes depending on your connection speed. After that, a background thread rescans every 15 minutes automatically.
 
 You can also trigger a manual scan at any time directly from the dashboard.
 
@@ -176,9 +190,10 @@ You can also trigger a manual scan at any time directly from the dashboard.
 ## Dashboard Features
 
 - Live signal table with sortable columns
-- Filter by asset class, direction (BUY / SELL), and minimum confidence
+- Filter by asset class (US Stocks, UK Stocks, Crypto, Forex, Indices, Commodities), direction (BUY / SELL), and minimum confidence
 - Summary stats: total scanned, BUY / SELL counts, high-confidence signals (≥ 80%)
 - Per-signal detail: entry price, stop loss, take-profit, RSI, sweep %, Markov state, market context
+- Morning watchlist — top 10 signals generated at 07:00 UTC
 - Next scan countdown timer
 - GitHub dark theme throughout
 
@@ -189,11 +204,13 @@ You can also trigger a manual scan at any time directly from the dashboard.
 - [x] Core screener engine
 - [x] All indicator formulas (RSI, ATR, EMA, VWAP, Fibonacci, Pivot Points)
 - [x] Liquidity sweep detection with confirmation logic
+- [x] Dynamic sweep thresholds per asset class
 - [x] Multi-factor scoring system (7 factors, 155 points max)
 - [x] Markov regime model (6-state, 6×6 transition matrix)
 - [x] Market context detection (CRISIS / TRENDING / NORMAL)
 - [x] Morning watchlist (top 10 signals at 07:00 UTC)
 - [x] Web dashboard with live filtering
+- [x] Full asset expansion — 335+ symbols across 6 classes including Commodities
 - [ ] Historical signal performance tracking
 - [ ] Price alerts (email / webhook)
 - [ ] Mobile optimised view
